@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semantic Maze — Understanding is Navigation</title>
+  <meta name="description" content="A puzzle maze game where zooming reveals understanding. Control with hand gestures or keyboard. Each zoom level unlocks a new layer of insight.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════ START SCREEN ═══ -->
+  <div id="startScreen">
+    <canvas id="bgCanvas"></canvas>
+    <div class="start-vignette"></div>
+
+    <div class="start-content">
+      <!-- Logo / Title -->
+      <div class="title-section">
+        <div class="title-badge">PUZZLE GAME</div>
+        <h1 class="game-title">SEMANTIC<br>MAZE</h1>
+        <p class="game-tagline">Understanding is your compass</p>
+      </div>
+
+      <!-- Zoom level preview strip -->
+      <div class="zoom-strip">
+        <div class="zoom-card" data-color="#4488ff">
+          <div class="zoom-dot" style="background:#4488ff; box-shadow:0 0 12px #4488ff"></div>
+          <span class="zoom-name">Explore</span>
+          <span class="zoom-desc">Clean maze</span>
+        </div>
+        <div class="zoom-arrow">›</div>
+        <div class="zoom-card" data-color="#44ff88">
+          <div class="zoom-dot" style="background:#44ff88; box-shadow:0 0 12px #44ff88"></div>
+          <span class="zoom-name">Structure</span>
+          <span class="zoom-desc">Flow lines</span>
+        </div>
+        <div class="zoom-arrow">›</div>
+        <div class="zoom-card" data-color="#ffee44">
+          <div class="zoom-dot" style="background:#ffee44; box-shadow:0 0 12px #ffee44"></div>
+          <span class="zoom-name">Awareness</span>
+          <span class="zoom-desc">Path hints</span>
+        </div>
+        <div class="zoom-arrow">›</div>
+        <div class="zoom-card" data-color="#ff8844">
+          <div class="zoom-dot" style="background:#ff8844; box-shadow:0 0 12px #ff8844"></div>
+          <span class="zoom-name">Insight</span>
+          <span class="zoom-desc">Causality</span>
+        </div>
+        <div class="zoom-arrow">›</div>
+        <div class="zoom-card" data-color="#ff44aa">
+          <div class="zoom-dot" style="background:#ff44aa; box-shadow:0 0 12px #ff44aa"></div>
+          <span class="zoom-name">Revelation</span>
+          <span class="zoom-desc">Alternatives</span>
+        </div>
+      </div>
+
+      <!-- Camera action -->
+      <div class="action-section">
+        <button id="startBtn" class="btn-primary" aria-label="Enable camera and start game">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Enable Camera &amp; Start
+        </button>
+
+        <div id="cameraStatusWrap" class="camera-status-wrap" aria-live="polite">
+          <div id="cameraLoader" class="camera-loader" style="display:none">
+            <div class="loader-ring"></div>
+          </div>
+          <p id="cameraStatus" class="camera-status-text"></p>
+        </div>
+
+        <button id="skipCameraBtn" class="btn-secondary" aria-label="Play with keyboard only">
+          ⌨&nbsp; Play with Keyboard Only
+        </button>
+      </div>
+
+      <!-- Controls legend -->
+      <div class="controls-legend">
+        <div class="legend-group">
+          <span class="legend-label">Move</span>
+          <div class="legend-keys">
+            <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd>
+          </div>
+        </div>
+        <div class="legend-sep"></div>
+        <div class="legend-group">
+          <span class="legend-label">Zoom In/Out</span>
+          <div class="legend-keys"><kbd>+</kbd><kbd>-</kbd></div>
+        </div>
+        <div class="legend-sep"></div>
+        <div class="legend-group">
+          <span class="legend-label">New Maze</span>
+          <div class="legend-keys"><kbd>R</kbd></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ GAME CONTAINER ═══ -->
+  <div id="gameContainer" style="display:none">
+    <!-- Main game canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Webcam feed (shown when camera enabled) -->
+    <div id="webcamContainer" class="webcam-container" style="display:none">
+      <video id="webcamVideo" autoplay playsinline muted></video>
+      <div class="webcam-label">GESTURE ACTIVE</div>
+    </div>
+
+    <!-- Floating controls bar (bottom-left) -->
+    <div id="controlsHUD" class="controls-hud">
+      <span>↑↓←→ Move</span>
+      <span class="hud-sep">·</span>
+      <span>+/- Zoom</span>
+      <span class="hud-sep">·</span>
+      <span>R New Maze</span>
+    </div>
+
+    <!-- New maze button (top-right) -->
+    <button id="newMazeBtn" class="btn-floating" aria-label="Start a new maze">↺ New Maze</button>
+
+    <!-- Win overlay -->
+    <div id="winOverlay" class="overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Maze complete">
+      <div class="overlay-card">
+        <div class="win-sparkle-row">
+          <span class="win-sparkle">✦</span>
+          <span class="win-sparkle delay1">✦</span>
+          <span class="win-sparkle delay2">✦</span>
+        </div>
+        <h2 class="win-title">Path Found!</h2>
+        <p class="win-subtitle">You understood the maze</p>
+        <div class="win-stats">
+          <div class="stat-box">
+            <span class="stat-num" id="stepsCount">0</span>
+            <span class="stat-lbl">Steps</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="timeCount">0s</span>
+            <span class="stat-lbl">Time</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="insightCount">0</span>
+            <span class="stat-lbl">Max Insight</span>
+          </div>
+        </div>
+        <div class="overlay-actions">
+          <button id="newMazeBtnWin" class="btn-primary" aria-label="Start a new maze">New Maze</button>
+          <button id="backMenuBtn" class="btn-secondary-sm" aria-label="Go back to main menu">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
